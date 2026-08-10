@@ -5,6 +5,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import { prisma } from './lib/prisma.js'
+import itemsRouter from './routes/items.js'
 
 const REQUIRED_ENV_VARS = ['FRONTEND_URL', 'DATABASE_URL']
 
@@ -31,11 +32,12 @@ app.get('/api/health', async (_req, res) => {
   res.json({ status: 'ok', questCount })
 })
 
+app.use('/api/items', itemsRouter)
+
 app.use((_req, res) => {
   res.status(404).json({ message: 'Not found' })
 })
 
-// eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
   console.error(err)
   res.status(500).json({ message: 'Something went wrong' })

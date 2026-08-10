@@ -1,0 +1,166 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 3rem;
+  max-width: 640px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.backLink:hover {
+  color: var(--color-gold-bright);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: 0.03em;
+  color: var(--color-text-primary);
+}
+
+.status {
+  color: var(--color-text-secondary);
+  padding: 3rem 0;
+  text-align: center;
+}
+
+.error {
+  color: var(--color-danger);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-danger);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface-sunken));
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem 1.75rem;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.itemName {
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.itemLevel {
+  color: var(--color-gold-bright);
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+.line {
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+}
+
+.metaRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+}
+
+.dps {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  font-style: italic;
+  margin-bottom: 0.25rem;
+}
+
+.effects {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.35rem;
+}
+
+.effectLine {
+  color: var(--color-quality-2);
+  font-size: 0.85rem;
+}
+
+.flavor {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+}
+
+.sellPrice {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.gold {
+  color: var(--color-gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.silver {
+  color: var(--color-silver);
+  font-variant-numeric: tabular-nums;
+}
+
+.copper {
+  color: var(--color-copper);
+  font-variant-numeric: tabular-nums;
+}
+
+.dropSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dropHeading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-primary);
+}
+
+.dropList {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--color-divider);
+}
+
+.dropRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.25rem;
+  border-bottom: 1px solid var(--color-divider);
+  font-size: 0.85rem;
+}
+
+.dropChance {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}

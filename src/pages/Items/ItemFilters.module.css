@@ -1,0 +1,222 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.searchRow {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchField {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.searchInput {
+  width: 100%;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.9rem 0.65rem 2.4rem;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+.searchInput:focus {
+  border-color: var(--color-gold);
+}
+
+.resetButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 0.6rem 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.resetButton:hover:not(:disabled) {
+  border-color: var(--color-gold-dim);
+  color: var(--color-gold-bright);
+}
+
+.resetButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.qualityRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.qualityPill {
+  --pill-color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-secondary);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem 0.4rem 1.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  position: relative;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.qualityPill::before {
+  content: "";
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--pill-color);
+}
+
+.qualityPill:hover {
+  border-color: var(--color-gold-dim);
+  color: var(--color-text-primary);
+}
+
+.qualityPillActive {
+  border-color: var(--pill-color);
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+}
+
+.fieldsRow {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 160px;
+}
+
+.fieldLabel {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.selectWrap {
+  position: relative;
+}
+
+.select {
+  width: 100%;
+  appearance: none;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 0.6rem 2.2rem 0.6rem 0.85rem;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.select:focus {
+  border-color: var(--color-gold);
+}
+
+.selectCaret {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  font-size: 0.8rem;
+}
+
+.rangeRow {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.rangeField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.rangeInputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rangeInputs input {
+  width: 5rem;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.6rem;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+}
+
+.rangeInputs input:focus {
+  border-color: var(--color-gold);
+}
+
+.rangeDash {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 720px) {
+  .rangeRow {
+    gap: 1rem;
+  }
+
+  .fieldsRow {
+    flex-direction: column;
+  }
+}

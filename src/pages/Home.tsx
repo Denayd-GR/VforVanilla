@@ -1,12 +1,7 @@
-import styles from './Home.module.css'
+import { Navigate } from 'react-router-dom'
 
 function Home() {
-  return (
-    <div className={styles.page}>
-      <h1>VforVanilla</h1>
-      <p>Coming soon.</p>
-    </div>
-  )
+  return <Navigate to="/items" replace />
 }
 
 export default Home
