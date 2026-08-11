@@ -9,6 +9,30 @@ const DEFAULT_LIMIT = 24
 const SPELL_TRIGGER_LABELS = { 0: 'Use', 1: 'Equip', 2: 'Chance on Hit', 4: 'Soulstone' }
 const MAX_DROP_SOURCES = 5
 
+// Mounts live in item_template.class=15 (Miscellaneous), but this classic-era
+// world DB never populates subclass for that class (every row is 0) — it can't
+// tell a mount apart from a pet, quest trinket, or plain junk item. The only
+// reliable signal is the item's own on-use spell: every mount item casts a
+// spell whose effect applies SPELL_AURA_MOUNTED (aura id 78). Cross-referencing
+// spell_template that way found 122 items and zero false positives.
+const MOUNT_CATEGORY_ID = 15
+const SPELL_AURA_MOUNTED = 78
+const SPELL_SLOTS = [1, 2, 3, 4, 5]
+
+async function getMountSpellIds() {
+  const mountSpells = await prisma.spell_template.findMany({
+    where: {
+      OR: [
+        { effectApplyAuraName1: SPELL_AURA_MOUNTED },
+        { effectApplyAuraName2: SPELL_AURA_MOUNTED },
+        { effectApplyAuraName3: SPELL_AURA_MOUNTED },
+      ],
+    },
+    select: { entry: true },
+  })
+  return mountSpells.map((s) => s.entry)
+}
+
 // Best-effort $-token substitution for spell description/auraDescription text.
 // Only $s1/$s2/$s3 (effect base points) are resolved; everything else ($d,
 // $x1, cross-spell refs, etc.) is left alone. If unresolved tokens remain
@@ -147,6 +171,11 @@ export async function getItems(req, res) {
   if (itemClass !== undefined) where.class = itemClass
   if (subclass !== undefined) where.subclass = subclass
   if (inventoryType !== undefined) where.inventory_type = inventoryType
+
+  if (itemClass === MOUNT_CATEGORY_ID) {
+    const mountSpellIds = await getMountSpellIds()
+    where.OR = SPELL_SLOTS.map((slot) => ({ [`spellid_${slot}`]: { in: mountSpellIds } }))
+  }
 
   if (requiredLevelMin !== undefined || requiredLevelMax !== undefined) {
     where.required_level = {}

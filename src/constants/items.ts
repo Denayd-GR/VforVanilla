@@ -14,6 +14,7 @@ import {
   faCircleQuestion,
   faKey,
   faDice,
+  faHorse,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import type { LookupOption, ItemClassOption, MoneyBreakdown } from "../types";
@@ -22,6 +23,7 @@ import type { LookupOption, ItemClassOption, MoneyBreakdown } from "../types";
 // ItemClass/ItemSubclass/InventoryType enums, not the modern retail tables.
 
 export const WEAPON_CATEGORY_ID = 2;
+export const MOUNT_CATEGORY_ID = 15;
 
 export const QUALITIES: LookupOption[] = [
   { id: 0, label: "Poor" },
@@ -229,14 +231,26 @@ export const ITEM_CLASSES: ItemClassOption[] = [
 // Category filter only offers gear worth browsing — everything else (consumables,
 // quest items, trade goods, etc.) is still labeled correctly via ITEM_CLASSES
 // when it shows up in unfiltered results, just not selectable as a filter.
-// Consumables and Miscellaneous (mounts/pets/junk) are deliberately excluded:
-// every row in both classes shares the same subclass value in this world DB,
-// so there's no real column left to filter on without name-pattern guessing.
+// Consumables and the rest of Miscellaneous (pets/junk/holiday) are deliberately
+// excluded: every row in both classes shares the same subclass value in this
+// world DB, so there's no real column left to filter on without name-pattern
+// guessing. Mounts is the one exception — the backend identifies mount rows via
+// their on-use spell's Mounted aura instead of subclass, so it gets its own
+// synthetic entry here (same class id as Miscellaneous, distinct label/icon)
+// rather than reusing the generic ITEM_CLASSES[15] entry.
 const CATEGORY_FILTER_IDS = [1, 2, 4];
 
-export const CATEGORY_FILTER_OPTIONS: ItemClassOption[] = ITEM_CLASSES.filter((c) =>
-  CATEGORY_FILTER_IDS.includes(c.id),
-);
+const MOUNT_CATEGORY_OPTION: ItemClassOption = {
+  id: MOUNT_CATEGORY_ID,
+  label: "Mounts",
+  icon: faHorse,
+  subclasses: [],
+};
+
+export const CATEGORY_FILTER_OPTIONS: ItemClassOption[] = [
+  ...ITEM_CLASSES.filter((c) => CATEGORY_FILTER_IDS.includes(c.id)),
+  MOUNT_CATEGORY_OPTION,
+];
 
 // Armor browsing groups real item_template.subclass/inventory_type values
 // into the families players actually think in (matches the in-game AH

@@ -12,6 +12,7 @@ import {
   CATEGORY_FILTER_OPTIONS,
   WEAPON_SUBCLASS_GROUP_OPTIONS,
   WEAPON_CATEGORY_ID,
+  MOUNT_CATEGORY_ID,
   ARMOR_TYPE_GROUPS,
   ARMOR_TYPE_SLOT_OPTIONS,
   getQualityColor,
@@ -143,6 +144,7 @@ function ItemFilters({ value, onChange }: Props) {
   const isWeaponCategory = draft.itemClass === WEAPON_CATEGORY_ID;
   const isArmorCategory = draft.itemClass === ARMOR_CATEGORY_ID;
   const isContainerCategory = draft.itemClass === CONTAINER_CATEGORY_ID;
+  const isMountCategory = draft.itemClass === MOUNT_CATEGORY_ID;
 
   const selectedArmorType = getArmorTypeOption(armorTypeId);
   const armorAllowsSlot = selectedArmorType?.allowsSlot === true;
@@ -180,9 +182,9 @@ function ItemFilters({ value, onChange }: Props) {
 
   const subclassOptions = useMemo(() => {
     if (isWeaponCategory) return WEAPON_SUBCLASS_GROUP_OPTIONS;
-    if (isArmorCategory || draft.itemClass === undefined) return [];
+    if (isArmorCategory || isMountCategory || draft.itemClass === undefined) return [];
     return ITEM_CLASSES.find((c) => c.id === draft.itemClass)?.subclasses ?? [];
-  }, [draft.itemClass, isWeaponCategory, isArmorCategory]);
+  }, [draft.itemClass, isWeaponCategory, isArmorCategory, isMountCategory]);
 
   const slotOptions = useMemo(() => {
     if (isWeaponCategory) return getWeaponTypeOptionsForGroup(weaponGroup);
@@ -190,7 +192,10 @@ function ItemFilters({ value, onChange }: Props) {
     return [];
   }, [isWeaponCategory, isArmorCategory, weaponGroup, armorAllowsSlot]);
 
-  const isSlotNotApplicable = isContainerCategory || (isArmorCategory && !armorAllowsSlot);
+  // Mounts are never equippable (inventory_type is always 0) and their real
+  // item_template.subclass is always 0 too, so neither Subclass nor Slot has
+  // a usable value to offer — both are disabled the same way Container hides Slot.
+  const isSlotNotApplicable = isContainerCategory || isMountCategory || (isArmorCategory && !armorAllowsSlot);
 
   const isAtDefaults =
     Object.keys(draft).length === 1 && draft.itemClass === DEFAULT_ITEM_CATEGORY;
