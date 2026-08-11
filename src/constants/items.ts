@@ -21,6 +21,8 @@ import type { LookupOption, ItemClassOption, MoneyBreakdown } from "../types";
 // VMaNGOS is a 1.12 "Vanilla" world DB — these mirror the client's original
 // ItemClass/ItemSubclass/InventoryType enums, not the modern retail tables.
 
+export const WEAPON_CATEGORY_ID = 2;
+
 export const QUALITIES: LookupOption[] = [
   { id: 0, label: "Poor" },
   { id: 1, label: "Common" },
@@ -79,16 +81,17 @@ export const ITEM_CLASSES: ItemClassOption[] = [
     id: 1,
     label: "Container",
     icon: faBagShopping,
+    // Engineering Bag (subclass 4) exists in the retail enum but has zero
+    // rows in this world DB — omitted so the filter never offers a dead end.
     subclasses: [
       { id: 0, label: "Bag" },
       { id: 1, label: "Soul Bag" },
       { id: 2, label: "Herb Bag" },
       { id: 3, label: "Enchanting Bag" },
-      { id: 4, label: "Engineering Bag" },
     ],
   },
   {
-    id: 2,
+    id: WEAPON_CATEGORY_ID,
     label: "Weapon",
     icon: faHammer,
     subclasses: [
@@ -226,11 +229,83 @@ export const ITEM_CLASSES: ItemClassOption[] = [
 // Category filter only offers gear worth browsing — everything else (consumables,
 // quest items, trade goods, etc.) is still labeled correctly via ITEM_CLASSES
 // when it shows up in unfiltered results, just not selectable as a filter.
-const CATEGORY_FILTER_IDS = [2, 4];
+// Consumables and Miscellaneous (mounts/pets/junk) are deliberately excluded:
+// every row in both classes shares the same subclass value in this world DB,
+// so there's no real column left to filter on without name-pattern guessing.
+const CATEGORY_FILTER_IDS = [1, 2, 4];
 
 export const CATEGORY_FILTER_OPTIONS: ItemClassOption[] = ITEM_CLASSES.filter((c) =>
   CATEGORY_FILTER_IDS.includes(c.id),
 );
+
+// Armor browsing groups real item_template.subclass/inventory_type values
+// into the families players actually think in (matches the in-game AH
+// filter tree). Each option maps to the real column(s) that identify it:
+//   - Types (Cloth/Leather/Mail/Plate): subclass only — `allowsSlot` means
+//     the Slot field then further narrows by inventory_type (Chest, Head...).
+//   - Jewelry/Relics/Other: a single subclass and/or inventory_type value
+//     fully identifies the item, so Slot has nothing left to add.
+// Cloaks are the one cross-cutting case — every cape in the game is itemized
+// as subclass 1 (Cloth) regardless of who can wear it, distinguished only by
+// inventory_type 16 (Back), so that option pins both fields at once.
+export interface ArmorTypeOption extends LookupOption {
+  subclass?: number;
+  inventoryType?: number;
+  allowsSlot?: boolean;
+}
+
+export interface ArmorTypeGroup {
+  label: string;
+  options: ArmorTypeOption[];
+}
+
+export const ARMOR_TYPE_GROUPS: ArmorTypeGroup[] = [
+  {
+    label: "Types",
+    options: [
+      { id: 0, label: "Cloth", subclass: 1, allowsSlot: true },
+      { id: 1, label: "Leather", subclass: 2, allowsSlot: true },
+      { id: 2, label: "Mail", subclass: 3, allowsSlot: true },
+      { id: 3, label: "Plate", subclass: 4, allowsSlot: true },
+    ],
+  },
+  {
+    label: "Jewelry",
+    options: [
+      { id: 4, label: "Amulets", inventoryType: 2 },
+      { id: 5, label: "Rings", inventoryType: 11 },
+      { id: 6, label: "Trinkets", inventoryType: 12 },
+    ],
+  },
+  {
+    label: "Relics",
+    options: [
+      { id: 7, label: "Librams", subclass: 7 },
+      { id: 8, label: "Idols", subclass: 8 },
+      { id: 9, label: "Totems", subclass: 9 },
+    ],
+  },
+  {
+    label: "Other",
+    options: [
+      { id: 10, label: "Cloaks", subclass: 1, inventoryType: 16 },
+      { id: 11, label: "Off-hand Frills", inventoryType: 23 },
+      { id: 12, label: "Shields", subclass: 6 },
+      { id: 13, label: "Shirts", inventoryType: 4 },
+      { id: 14, label: "Tabards", inventoryType: 19 },
+      { id: 15, label: "Miscellaneous", subclass: 0 },
+    ],
+  },
+];
+
+export function getArmorTypeOption(id: number | undefined): ArmorTypeOption | undefined {
+  if (id === undefined) return undefined;
+  for (const group of ARMOR_TYPE_GROUPS) {
+    const found = group.options.find((o) => o.id === id);
+    if (found) return found;
+  }
+  return undefined;
+}
 
 const DEFAULT_CLASS_ICON: IconDefinition = faCube;
 const MONEY_CLASS_ICON: IconDefinition = faCoins;
@@ -283,20 +358,68 @@ export function getInventoryTypeLabel(inventoryType: number): string {
   return INVENTORY_TYPES.find((t) => t.id === inventoryType)?.label ?? "Unknown";
 }
 
-// Slot filter is scoped per category — the Weapon and Armor categories don't
-// share equip slots, so the dropdown should only ever offer the ones relevant
-// to whichever category is currently selected.
-const WEAPON_SLOT_IDS = [13, 15, 17, 21, 22, 23, 25, 26];
-const ARMOR_SLOT_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 19, 20];
+// Only reachable once Armor > Types > Cloth/Leather/Mail/Plate is picked —
+// Robe (20) is a chest-slot cosmetic variant with real, substantial data in
+// this DB, so it's kept as its own pick rather than silently merged into Chest.
+const ARMOR_TYPE_SLOT_IDS = [1, 3, 5, 6, 7, 8, 9, 10, 20];
 
-const SLOT_OPTIONS_BY_CATEGORY: Record<number, LookupOption[]> = {
-  2: INVENTORY_TYPES.filter((t) => WEAPON_SLOT_IDS.includes(t.id)),
-  4: INVENTORY_TYPES.filter((t) => ARMOR_SLOT_IDS.includes(t.id)),
-};
+export const ARMOR_TYPE_SLOT_OPTIONS: LookupOption[] = INVENTORY_TYPES.filter((t) =>
+  ARMOR_TYPE_SLOT_IDS.includes(t.id),
+);
 
-export function getSlotOptionsForCategory(itemClass: number | undefined): LookupOption[] {
-  if (itemClass === undefined) return INVENTORY_TYPES;
-  return SLOT_OPTIONS_BY_CATEGORY[itemClass] ?? INVENTORY_TYPES;
+// Weapon browsing groups the real item_template.subclass values (One-Handed
+// Axe, Dagger, etc.) into the four families players actually think in. The
+// group itself isn't a DB column — picking a group just scopes which real
+// subclass ids the next dropdown offers. Labels here are display-only
+// (plural, matching the filter UI); getSubclassLabel still returns the
+// canonical singular label from ITEM_CLASSES for item cards/detail pages.
+export const WEAPON_SUBCLASS_GROUPS: { label: string; options: LookupOption[] }[] = [
+  {
+    label: "One-Handed",
+    options: [
+      { id: 15, label: "Daggers" },
+      { id: 13, label: "Fist Weapons" },
+      { id: 0, label: "One-Handed Axes" },
+      { id: 4, label: "One-Handed Maces" },
+      { id: 7, label: "One-Handed Swords" },
+    ],
+  },
+  {
+    label: "Two-Handed",
+    options: [
+      { id: 6, label: "Polearms" },
+      { id: 10, label: "Staves" },
+      { id: 1, label: "Two-Handed Axes" },
+      { id: 5, label: "Two-Handed Maces" },
+      { id: 8, label: "Two-Handed Swords" },
+    ],
+  },
+  {
+    label: "Ranged",
+    options: [
+      { id: 2, label: "Bows" },
+      { id: 18, label: "Crossbows" },
+      { id: 3, label: "Guns" },
+      { id: 19, label: "Wands" },
+      { id: 16, label: "Thrown" },
+    ],
+  },
+  {
+    label: "Other",
+    options: [
+      { id: 20, label: "Fishing Poles" },
+      { id: 14, label: "Miscellaneous" },
+    ],
+  },
+];
+
+export const WEAPON_SUBCLASS_GROUP_OPTIONS: LookupOption[] = WEAPON_SUBCLASS_GROUPS.map(
+  (group, index) => ({ id: index, label: group.label }),
+);
+
+export function getWeaponTypeOptionsForGroup(groupIndex: number | undefined): LookupOption[] {
+  if (groupIndex === undefined) return [];
+  return WEAPON_SUBCLASS_GROUPS[groupIndex]?.options ?? [];
 }
 
 export const ITEMS_PER_PAGE_OPTIONS = [24, 48, 96];

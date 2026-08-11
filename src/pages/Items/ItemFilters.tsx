@@ -10,12 +10,20 @@ import {
   QUALITY_FILTER_OPTIONS,
   ITEM_CLASSES,
   CATEGORY_FILTER_OPTIONS,
+  WEAPON_SUBCLASS_GROUP_OPTIONS,
+  WEAPON_CATEGORY_ID,
+  ARMOR_TYPE_GROUPS,
+  ARMOR_TYPE_SLOT_OPTIONS,
   getQualityColor,
-  getSlotOptionsForCategory,
+  getWeaponTypeOptionsForGroup,
+  getArmorTypeOption,
   DEFAULT_ITEM_CATEGORY,
 } from "../../constants/items";
 import type { ItemsQueryParams, LookupOption } from "../../types";
 import styles from "./ItemFilters.module.css";
+
+const ARMOR_CATEGORY_ID = 4;
+const CONTAINER_CATEGORY_ID = 1;
 
 interface Props {
   value: ItemsQueryParams;
@@ -28,10 +36,16 @@ function parseOptionalNumber(raw: string): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
+interface OptionGroup {
+  label: string;
+  options: LookupOption[];
+}
+
 interface FilterSelectProps {
   value: number | undefined;
   onChange: (value: number | undefined) => void;
-  options: LookupOption[];
+  options?: LookupOption[];
+  groups?: OptionGroup[];
   placeholder?: string;
   disabled?: boolean;
   label: string;
@@ -42,6 +56,7 @@ function FilterSelect({
   value,
   onChange,
   options,
+  groups,
   placeholder,
   disabled,
   label,
@@ -61,11 +76,21 @@ function FilterSelect({
         aria-label={label}
       >
         {includeBlankOption && <option value="">{placeholder}</option>}
-        {options.map((opt) => (
-          <option key={opt.id} value={opt.id}>
-            {opt.label}
-          </option>
-        ))}
+        {groups
+          ? groups.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.options.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))
+          : options?.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
+              </option>
+            ))}
       </select>
       <FontAwesomeIcon icon={faCaretDown} className={styles.selectCaret} />
     </div>
@@ -74,6 +99,8 @@ function FilterSelect({
 
 function ItemFilters({ value, onChange }: Props) {
   const [draft, setDraft] = useState<ItemsQueryParams>(value);
+  const [weaponGroup, setWeaponGroup] = useState<number | undefined>(undefined);
+  const [armorTypeId, setArmorTypeId] = useState<number | undefined>(undefined);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -100,6 +127,8 @@ function ItemFilters({ value, onChange }: Props) {
 
   function handleClassChange(itemClass: number | undefined) {
     updateImmediate({ itemClass, subclass: undefined, inventoryType: undefined });
+    setWeaponGroup(undefined);
+    setArmorTypeId(undefined);
   }
 
   function handleReset() {
@@ -107,17 +136,61 @@ function ItemFilters({ value, onChange }: Props) {
     debouncedCommit.clear();
     setDraft(defaults);
     onChange(defaults);
+    setWeaponGroup(undefined);
+    setArmorTypeId(undefined);
+  }
+
+  const isWeaponCategory = draft.itemClass === WEAPON_CATEGORY_ID;
+  const isArmorCategory = draft.itemClass === ARMOR_CATEGORY_ID;
+  const isContainerCategory = draft.itemClass === CONTAINER_CATEGORY_ID;
+
+  const selectedArmorType = getArmorTypeOption(armorTypeId);
+  const armorAllowsSlot = selectedArmorType?.allowsSlot === true;
+
+  // For weapons, "Subclass" picks a family (One-Handed/Two-Handed/Ranged/Other)
+  // rather than a real item_template.subclass value — it just scopes which
+  // specific weapon types the "Slot" field offers next.
+  // For armor, "Subclass" picks a type (Cloth, Amulets, Cloaks, ...); each
+  // type maps to its own real subclass and/or inventory_type value, so both
+  // fields are set together and stale values from a previous pick never linger.
+  function handleSubclassChange(id: number | undefined) {
+    if (isWeaponCategory) {
+      setWeaponGroup(id);
+      updateImmediate({ subclass: undefined });
+    } else if (isArmorCategory) {
+      setArmorTypeId(id);
+      const opt = getArmorTypeOption(id);
+      updateImmediate({ subclass: opt?.subclass, inventoryType: opt?.inventoryType });
+    } else {
+      updateImmediate({ subclass: id });
+    }
+  }
+
+  // For weapons, "Slot" holds the real subclass id (Dagger, Bow, etc.). For
+  // armor it only activates when the chosen type is Cloth/Leather/Mail/Plate,
+  // narrowing that same subclass down to a specific equip slot. Everywhere
+  // else it holds the equip slot (inventoryType) as before.
+  function handleSlotChange(id: number | undefined) {
+    if (isWeaponCategory) {
+      updateImmediate({ subclass: id });
+    } else {
+      updateImmediate({ inventoryType: id });
+    }
   }
 
   const subclassOptions = useMemo(() => {
-    if (draft.itemClass === undefined) return [];
+    if (isWeaponCategory) return WEAPON_SUBCLASS_GROUP_OPTIONS;
+    if (isArmorCategory || draft.itemClass === undefined) return [];
     return ITEM_CLASSES.find((c) => c.id === draft.itemClass)?.subclasses ?? [];
-  }, [draft.itemClass]);
+  }, [draft.itemClass, isWeaponCategory, isArmorCategory]);
 
-  const slotOptions = useMemo(
-    () => getSlotOptionsForCategory(draft.itemClass),
-    [draft.itemClass],
-  );
+  const slotOptions = useMemo(() => {
+    if (isWeaponCategory) return getWeaponTypeOptionsForGroup(weaponGroup);
+    if (isArmorCategory) return armorAllowsSlot ? ARMOR_TYPE_SLOT_OPTIONS : [];
+    return [];
+  }, [isWeaponCategory, isArmorCategory, weaponGroup, armorAllowsSlot]);
+
+  const isSlotNotApplicable = isContainerCategory || (isArmorCategory && !armorAllowsSlot);
 
   const isAtDefaults =
     Object.keys(draft).length === 1 && draft.itemClass === DEFAULT_ITEM_CATEGORY;
@@ -184,21 +257,37 @@ function ItemFilters({ value, onChange }: Props) {
           <span className={styles.fieldLabel}>Subclass</span>
           <FilterSelect
             label="Item subclass"
-            value={draft.subclass}
-            onChange={(subclass) => updateImmediate({ subclass })}
-            options={subclassOptions}
+            value={isWeaponCategory ? weaponGroup : isArmorCategory ? armorTypeId : draft.subclass}
+            onChange={handleSubclassChange}
+            options={isArmorCategory ? undefined : subclassOptions}
+            groups={isArmorCategory ? ARMOR_TYPE_GROUPS : undefined}
             placeholder={draft.itemClass === undefined ? "Pick a category first" : "Any subclass"}
-            disabled={subclassOptions.length === 0}
+            disabled={!isArmorCategory && subclassOptions.length === 0}
           />
         </label>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>Slot</span>
           <FilterSelect
-            label="Equip slot"
-            value={draft.inventoryType}
-            onChange={(inventoryType) => updateImmediate({ inventoryType })}
+            label={isWeaponCategory ? "Weapon type" : "Equip slot"}
+            value={
+              isWeaponCategory
+                ? draft.subclass
+                : isSlotNotApplicable
+                  ? undefined
+                  : draft.inventoryType
+            }
+            onChange={handleSlotChange}
             options={slotOptions}
-            placeholder="Any slot"
+            placeholder={
+              isSlotNotApplicable
+                ? "Not Applicable"
+                : isWeaponCategory
+                  ? weaponGroup === undefined
+                    ? "Pick a subclass first"
+                    : "Any type"
+                  : "Any slot"
+            }
+            disabled={isSlotNotApplicable || (isWeaponCategory && slotOptions.length === 0)}
           />
         </label>
       </div>

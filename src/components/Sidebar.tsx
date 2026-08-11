@@ -4,6 +4,7 @@ import {
   faBoxesStacked,
   faWandMagicSparkles,
   faUserGroup,
+  faTrophy,
   faEllipsis,
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "../cssModules/Sidebar.module.css";
@@ -12,6 +13,7 @@ const NAV_ITEMS = [
   { to: "/items", label: "Items", icon: faBoxesStacked },
   { to: "/spells", label: "Spells", icon: faWandMagicSparkles },
   { to: "/npcs", label: "NPCs", icon: faUserGroup },
+  { to: "/bis", label: "BiS", icon: faTrophy },
   { to: "/misc", label: "Misc", icon: faEllipsis },
 ];
 

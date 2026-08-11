@@ -27,6 +27,12 @@
   --color-danger: #e5484d;
   --color-silver: #c7c7c7;
   --color-copper: #b87333;
+  --color-accent-flask: #9b6fd6;
+  --color-accent-food: #d4b896;
+  --color-accent-potion: #d1477a;
+  --color-accent-weapon: #8a9ba8;
+  --color-accent-misc: #6fae7f;
+  --color-accent-enchant: #d946c9;
 
   /* ── Item Quality ── */
   --color-quality-0: #9d9d9d;

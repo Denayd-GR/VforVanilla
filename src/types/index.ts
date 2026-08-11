@@ -121,3 +121,57 @@ export interface MoneyBreakdown {
   silver: number;
   copper: number;
 }
+
+export interface BiSSpec {
+  slug: string;
+  name: string;
+  hasData: boolean;
+}
+
+export interface BiSClassTaxonomy {
+  slug: string;
+  name: string;
+  icon: IconDefinition;
+  specs: BiSSpec[];
+}
+
+export interface BiSGearEntry {
+  slot: string;
+  item: string;
+  entry?: number;
+  enchant: string | null;
+  source: string;
+  detail: string;
+}
+
+export interface BiSPhase {
+  id: string;
+  label: string;
+  zone: string;
+  gear: BiSGearEntry[];
+}
+
+export interface BiSConsumableGroup {
+  category: string;
+  slug: string;
+  icon: IconDefinition;
+  best: string;
+  alternatives?: string;
+  note?: string;
+}
+
+export interface BiSClassGuide {
+  introduction: string;
+  rotationNote?: string;
+  singleTarget: string[];
+  aoe: string[];
+}
+
+export interface BiSSpecData {
+  classSlug: string;
+  specSlug: string;
+  phases: BiSPhase[];
+  consumables: BiSConsumableGroup[];
+  talentImage?: string;
+  classGuide?: BiSClassGuide;
+}
