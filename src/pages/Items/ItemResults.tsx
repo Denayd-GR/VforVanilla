@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCopy, faCheck } from "@fortawesome/free-solid-svg-icons";
 import {
   getClassIcon,
   getClassLabel,
@@ -16,8 +18,18 @@ interface Props {
   loading: boolean;
 }
 
+// How long the button shows a "copied" checkmark before reverting to the copy icon.
+const COPIED_FEEDBACK_MS = 1500;
+
 function ItemResults({ items, loading }: Props) {
   const shouldReduceMotion = useReducedMotion();
+  const [copiedEntry, setCopiedEntry] = useState<number | null>(null);
+
+  async function handleCopy(entry: number) {
+    await navigator.clipboard.writeText(`.add item ${entry}`);
+    setCopiedEntry(entry);
+    setTimeout(() => setCopiedEntry((current) => (current === entry ? null : current)), COPIED_FEEDBACK_MS);
+  }
 
   if (loading && items.length === 0) {
     return <p className={styles.status}>Loading items…</p>;
@@ -54,6 +66,14 @@ function ItemResults({ items, loading }: Props) {
               <span className={styles.levelChip}>ilvl {item.item_level}</span>
             </div>
           </Link>
+          <button
+            type="button"
+            className={styles.copyButton}
+            onClick={() => handleCopy(item.entry)}
+            aria-label={`Copy .add item ${item.entry} to clipboard`}
+          >
+            <FontAwesomeIcon icon={copiedEntry === item.entry ? faCheck : faCopy} />
+          </button>
         </li>
       ))}
     </motion.ul>
